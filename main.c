@@ -1,4 +1,6 @@
 #include <stdio.h> 
+#include "vec3.h"
+#include "color.h"
 
 int main(void) { 
     int image_width  = 256;
@@ -12,16 +14,10 @@ int main(void) {
         fflush(stderr); 
      
         for (int i = 0; i < image_width; i++) { 
-        
-            double r = (double)i / (image_width  - 1); 
-            double g = (double)j / (image_height - 1 );
-            double b = (r + g) / (2.0); // color azul en funcion de r y g. Se normaliza dividiendo por el valor máximo que puede tomar (2.0)
-            
-            int ir = (int)(255.999 * r); 
-            int ig = (int)(255.999 * g);
-            int ib = (int)(255.999 * b);
-        
-            printf("%d %d %d\n", ir, ig, ib); 
+            color pixel = v3((double)i / (image_width - 1),
+                             (double)j / (image_height - 1),
+                             0.0);
+            write_color(stdout, pixel); // exporta el color
         }
     }
     fprintf(stderr, "\r¡Listo!                       \n"); 
