@@ -2,29 +2,23 @@
 #include "vec3.h"
 #include "color.h"
 #include "ray.h"
+#include <math.h>  // INFINITY
+#include "hittable.h"
 
-// ¿El rayo r golpea la esfera de centro "center" y radio "radius"?
-int hit_sphere(point3 center, double radius, ray r) {
-    vec3 oc = vec3_sub(center, r.orig);          // C - A
-    double a = vec3_dot(r.dir, r.dir);           // b . b
-    double h = vec3_dot(r.dir, oc);              // b . (C - A)
-    double c = vec3_dot(oc, oc) - radius*radius; // (C-A).(C-A) - r^2
-    double discriminant = h*h - a*c;
-    return discriminant >= 0;                    // 1 si toca, 0 si no
-}
-
-color ray_color(ray r) {
-    // Reto: mover la esfera y cambiarle el color y radio
-    if (hit_sphere(v3(0.3, 0.4, -0.7), 0.2, r))
-        return v3(0.5, 0, 0.5);   // morado
-        
-    // Si no, el cielo de antes
+ // COLOR
+    color ray_color(ray r, hittable_list world) {
+    hit_record rec;
+    if (world_hit(world, r, 0.0, INFINITY, &rec)) { 
+        // La normal esta en [-1,1]; la mapeamos a un color [0,1]
+        return vec3_scale(vec3_add(rec.normal, v3(1,1,1)), 0.5);
+    } 
+     // cielo de antes si no hay impacto (devuelve 0)  
     vec3 unit_direction = vec3_unit(r.dir);
-    double a = 0.5 * (unit_direction.y + 1.0);  // a en [0,1]
+    double a = 0.5 * (unit_direction.y + 1.0);
     return vec3_add(vec3_scale(v3(1,1,1), 1.0 - a),
                     vec3_scale(v3(0.5,0.7,1.0),  a));
 }
-
+    
 int main(void) { 
     // --- Imagen ---
     double aspect_ratio = 16.0 / 9.0;
@@ -55,6 +49,13 @@ int main(void) {
         vec3_add(viewport_upper_left,
                  vec3_scale(vec3_add(pixel_delta_u, pixel_delta_v), 0.5));
                        
+    // El mundo: dos esfera. La grande hace de "suelo".
+    sphere spheres[] = {
+        { v3(0,      0, -1),   0.5, NULL }, // {centro, radio, material}
+        { v3(0, -100.5, -1), 100.0, NULL }, // esfera gigante es el suelo
+    };
+    hittable_list world = { spheres, 2 };
+     
     // --- Render ---
     printf("P3\n%d %d\n255\n", image_width, image_height);
 
@@ -71,7 +72,7 @@ int main(void) {
             // rellena los campos en orden. Tambien funcionan campos designados como
             // ray r = { .orig = camera_center, .dir = ray_direction };
             
-            color pixel = ray_color(r);
+            color pixel = ray_color(r, world);
             write_color(stdout, pixel);
         }
     }
