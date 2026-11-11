@@ -3,15 +3,26 @@
 #include "color.h"
 #include "ray.h"
 
-// Reto: cielo degradado naranja-morado 
+// ¿El rayo r golpea la esfera de centro "center" y radio "radius"?
+int hit_sphere(point3 center, double radius, ray r) {
+    vec3 oc = vec3_sub(center, r.orig);          // C - A
+    double a = vec3_dot(r.dir, r.dir);           // b . b
+    double h = vec3_dot(r.dir, oc);              // b . (C - A)
+    double c = vec3_dot(oc, oc) - radius*radius; // (C-A).(C-A) - r^2
+    double discriminant = h*h - a*c;
+    return discriminant >= 0;                    // 1 si toca, 0 si no
+}
+
 color ray_color(ray r) {
+    // Una esfera roja centrada delante de la camara
+    if (hit_sphere(v3(0, 0, -1), 0.5, r))
+        return v3(1, 0, 0);   // rojo
+        
+    // Si no, el cielo de antes
     vec3 unit_direction = vec3_unit(r.dir);
     double a = 0.5 * (unit_direction.y + 1.0);  // a en [0,1]
-    color purple = v3(1.0, 0.5, 1.0);
-    color orange  = v3(1.0, 0.5, 0.2);
-    
-    return vec3_add(vec3_scale(purple, 1.0 - a),
-                    vec3_scale(orange,  a));
+    return vec3_add(vec3_scale(v3(1,1,1), 1.0 - a),
+                    vec3_scale(v3(0.5,0.7,1.0),  a));
 }
 
 int main(void) { 
