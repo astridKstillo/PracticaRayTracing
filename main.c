@@ -3,15 +3,15 @@
 #include "color.h"
 #include "ray.h"
 
-// Color de fondo: degradado azul-blanco segun la direccion del rayo.
+// Reto: cielo degradado naranja-morado 
 color ray_color(ray r) {
     vec3 unit_direction = vec3_unit(r.dir);
     double a = 0.5 * (unit_direction.y + 1.0);  // a en [0,1]
-    color white = v3(1.0, 1.0, 1.0);
-    color blue  = v3(0.5, 0.7, 1.0);
-    // (1-a)*blanco + a*azul
-    return vec3_add(vec3_scale(white, 1.0 - a),
-                    vec3_scale(blue,  a));
+    color purple = v3(1.0, 0.5, 1.0);
+    color orange  = v3(1.0, 0.5, 0.2);
+    
+    return vec3_add(vec3_scale(purple, 1.0 - a),
+                    vec3_scale(orange,  a));
 }
 
 int main(void) { 
