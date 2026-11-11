@@ -14,9 +14,9 @@ int hit_sphere(point3 center, double radius, ray r) {
 }
 
 color ray_color(ray r) {
-    // Una esfera roja centrada delante de la camara
-    if (hit_sphere(v3(0, 0, -1), 0.5, r))
-        return v3(1, 0, 0);   // rojo
+    // Reto: mover la esfera y cambiarle el color y radio
+    if (hit_sphere(v3(0.3, 0.4, -0.7), 0.2, r))
+        return v3(0.5, 0, 0.5);   // morado
         
     // Si no, el cielo de antes
     vec3 unit_direction = vec3_unit(r.dir);
