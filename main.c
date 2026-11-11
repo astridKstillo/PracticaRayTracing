@@ -53,8 +53,9 @@ int main(void) {
     sphere spheres[] = {
         { v3(0,      0, -1),   0.5, NULL }, // {centro, radio, material}
         { v3(0, -100.5, -1), 100.0, NULL }, // esfera gigante es el suelo
+        { v3(0,      0, -8),    5, NULL }, // Reto 5
     };
-    hittable_list world = { spheres, 2 };
+    hittable_list world = { spheres, 3 }; // count: 3
      
     // --- Render ---
     printf("P3\n%d %d\n255\n", image_width, image_height);
