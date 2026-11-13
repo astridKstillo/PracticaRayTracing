@@ -5,16 +5,14 @@
 #include <math.h>  // INFINITY
 #include "hittable.h"
 #include "rtweekend.h"
+#include "material.h"
 
-// Construye un rayo hacia un punto aleatorio dentro del pixel(i, j).
-// pixel00_loc, pixel_delta_u/v y camera_center son variables de la camara.
 ray get_ray(int i, int j, point3 pixel00_loc,
             vec3 pixel_delta_u, vec3 pixel_delta_v, point3 camera_center) {
-    // Desplazamiento aleatorio en [-0.5, 0.5] dentro del pixel     
-    double px = random_double() - 0.5; // random_double_range(-0.5, 0.5)
+     
+    double px = random_double() - 0.5;
     double py = random_double() - 0.5;
     
-    // pixel_sample = pixel00_loc + (i + px)·delta_u + (j + py)·delta_v
     point3 pixel_sample =
         vec3_add(pixel00_loc,
             vec3_add(vec3_scale(pixel_delta_u, i + px),
@@ -25,20 +23,20 @@ ray get_ray(int i, int j, point3 pixel00_loc,
 }
  // ray_color
     color ray_color(ray r, int depth, hittable_list world) {
-    // Caso base: demasiados rebotes, ya no se recoge mas luz.
     if (depth <= 0)
         return v3(0, 0, 0);
         
     hit_record rec;
-    // OJO: tmin = 0.001, no 0, para evitar el "acne de sombra" (ver pista).
     if (world_hit(world, r, 0.001, INFINITY, &rec)) { 
-        // Nueva direccion difusa: normal + vector unitario aleatorio
-        vec3 direction = vec3_add(rec.normal, random_on_hemisphere(rec.normal));
-        ray bounced = { rec.p, direction };
-        return vec3_scale(ray_color(bounced, depth - 1, world), 0.5);
-    } // c/rebote pierde la mitad de energia
-    
-     // Fondo (cielo)
+        ray scattered;
+        color attenuation;
+        if (scatter(rec.mat, r, rec, &attenuation, &scattered)) {
+            // color = atenuacion * color del rayo dispersado
+            return vec3_mul(attenuation, ray_color(scattered, depth - 1, world));
+        } 
+        return v3(0, 0, 0);   // material que absorbe
+    } 
+    // cielo
     vec3 unit_direction = vec3_unit(r.dir);
     double a = 0.5 * (unit_direction.y + 1.0);
     return vec3_add(vec3_scale(v3(1,1,1), 1.0 - a),
@@ -46,6 +44,21 @@ ray get_ray(int i, int j, point3 pixel00_loc,
 }
     
 int main(void) { 
+    // Materiales (¡deben sobrevivir a todo el render!)
+    material mat_ground = { LAMBERTIAN, v3(0.8, 0.8, 0.0), 0, 0 };
+    material mat_center = { LAMBERTIAN, v3(0.1, 0.2, 0.5), 0, 0 };
+    material mat_left   = { METAL,      v3(0.8, 0.8, 0.8), 0.3, 0 };
+    material mat_right  = { METAL,      v3(0.8, 0.6, 0.2), 1.0, 0 };
+    
+    // Esferas: cada una apunta a su material con &
+    sphere spheres[] = {
+        { v3( 0, -100.5, -1), 100.0, &mat_ground }, 
+        { v3( 0,      0, -1.2), 0.5, &mat_center }, 
+        { v3(-1,      0, -1),   0.5, &mat_left },
+        { v3( 1,      0, -1),   0.5, &mat_right },
+    };
+    hittable_list world = { spheres, 4 };
+    
     // --- Imagen ---
     double aspect_ratio = 16.0 / 9.0;
     int image_width  = 400;
@@ -74,13 +87,6 @@ int main(void) {
     point3 pixel00_loc = 
         vec3_add(viewport_upper_left,
                  vec3_scale(vec3_add(pixel_delta_u, pixel_delta_v), 0.5));
-                       
-    // El mundo: dos esfera. La grande hace de "suelo".
-    sphere spheres[] = {
-        { v3(0,      0, -1),   0.5, NULL }, // {centro, radio, material}
-        { v3(0, -100.5, -1), 100.0, NULL }, // esfera gigante es el suelo
-    };
-    hittable_list world = { spheres, 2 }; //
      
     // --- Render ---
     int samples_per_pixel = 100; // SPP
