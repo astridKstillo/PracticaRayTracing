@@ -48,7 +48,7 @@ int main(void) {
     material mat_ground = { LAMBERTIAN, v3(0.8, 0.8, 0.0), 0, 0 };
     material mat_center = { LAMBERTIAN, v3(0.1, 0.2, 0.5), 0, 0 };
     material mat_left   = { METAL,      v3(0.8, 0.8, 0.8), 0.3, 0 };
-    material mat_right  = { METAL,      v3(0.8, 0.6, 0.2), 1.0, 0 };
+    material mat_right  = { METAL,      v3(0.8, 0.6, 0.2), 0, 0 };
     
     // Esferas: cada una apunta a su material con &
     sphere spheres[] = {
