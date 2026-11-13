@@ -4,7 +4,25 @@
 #include "ray.h"
 #include <math.h>  // INFINITY
 #include "hittable.h"
+#include "rtweekend.h"
 
+// Construye un rayo hacia un punto aleatorio dentro del pixel(i, j).
+// pixel00_loc, pixel_delta_u/v y camera_center son variables de la camara.
+ray get_ray(int i, int j, point3 pixel00_loc,
+            vec3 pixel_delta_u, vec3 pixel_delta_v, point3 camera_center) {
+    // Desplazamiento aleatorio en [-0.5, 0.5] dentro del pixel     
+    double px = random_double() - 0.5; // random_double_range(-0.5, 0.5)
+    double py = random_double() - 0.5;
+    
+    // pixel_sample = pixel00_loc + (i + px)·delta_u + (j + py)·delta_v
+    point3 pixel_sample =
+        vec3_add(pixel00_loc,
+            vec3_add(vec3_scale(pixel_delta_u, i + px),
+                     vec3_scale(pixel_delta_v, j + py)));
+    vec3 ray_direction = vec3_sub(pixel_sample, camera_center);
+    ray r = { camera_center, ray_direction };
+    return r;
+}
  // COLOR
     color ray_color(ray r, hittable_list world) {
     hit_record rec;
@@ -53,28 +71,24 @@ int main(void) {
     sphere spheres[] = {
         { v3(0,      0, -1),   0.5, NULL }, // {centro, radio, material}
         { v3(0, -100.5, -1), 100.0, NULL }, // esfera gigante es el suelo
-        { v3(0,      0, -8),    5, NULL }, // Reto 5
     };
-    hittable_list world = { spheres, 3 }; // count: 3
+    hittable_list world = { spheres, 2 }; //
      
     // --- Render ---
+    int samples_per_pixel = 100; // SPP
+    double pixel_samples_scale = 1.0 / samples_per_pixel; // 1/N
     printf("P3\n%d %d\n255\n", image_width, image_height);
 
     for (int j = 0; j < image_height; j++) {
         fprintf(stderr, "\rFilas restantes: %d ", image_height - j);
         fflush(stderr);
         for (int i = 0; i < image_width; i++) {
-            point3 pixel_center =
-                vec3_add(pixel00_loc,
-                    vec3_add(vec3_scale(pixel_delta_u, i),
-                             vec3_scale(pixel_delta_v, j)));
-            vec3 ray_direction = vec3_sub(pixel_center, camera_center);
-            ray r = { camera_center, ray_direction };
-            // rellena los campos en orden. Tambien funcionan campos designados como
-            // ray r = { .orig = camera_center, .dir = ray_direction };
-            
-            color pixel = ray_color(r, world);
-            write_color(stdout, pixel);
+            color pixel = v3(0, 0, 0); // empieza en negro
+            for (int s = 0; s < samples_per_pixel; s++) {
+                ray r = get_ray(i, j, pixel00_loc, pixel_delta_u, pixel_delta_v, camera_center);
+                pixel = vec3_add(pixel, ray_color(r, world)); // suma el color
+            }
+            write_color(stdout, vec3_scale(pixel, pixel_samples_scale)); // prom
         }
     }
     fprintf(stderr, "\r¡Listo!                 \n");
