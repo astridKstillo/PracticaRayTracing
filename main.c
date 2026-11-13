@@ -33,7 +33,7 @@ ray get_ray(int i, int j, point3 pixel00_loc,
     // OJO: tmin = 0.001, no 0, para evitar el "acne de sombra" (ver pista).
     if (world_hit(world, r, 0.001, INFINITY, &rec)) { 
         // Nueva direccion difusa: normal + vector unitario aleatorio
-        vec3 direction = vec3_add(rec.normal, random_unit_vector());
+        vec3 direction = vec3_add(rec.normal, random_on_hemisphere(rec.normal));
         ray bounced = { rec.p, direction };
         return vec3_scale(ray_color(bounced, depth - 1, world), 0.5);
     } // c/rebote pierde la mitad de energia
